@@ -1,11 +1,13 @@
 from fastapi import FastAPI
+from exceptions import integrity_exception_handler, global_exception_handler
 from routes import router
 
 
 app = FastAPI()
 
 
-# global exception handler
+app.exception_handler(integrity_exception_handler)
+app.exception_handler(global_exception_handler)
 
 
 app.include_router(router)
