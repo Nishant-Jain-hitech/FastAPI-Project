@@ -24,6 +24,6 @@ class InviteToken(Base):
     expires_at: Mapped[datetime] = mapped_column(
         default=lambda: datetime.now(timezone.utc) + timedelta(hours=24)
     )
-    is_user: Mapped[bool] = mapped_column(default=False)
+    is_used: Mapped[bool] = mapped_column(default=False)
 
     team: Mapped["Team"] = relationship("Team", back_populates="invite_tokens")

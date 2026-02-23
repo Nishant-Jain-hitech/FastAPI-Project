@@ -4,6 +4,10 @@ from routes import router
 
 app = FastAPI()
 
+
+# global exception handler
+
+
 app.include_router(router)
 
 
