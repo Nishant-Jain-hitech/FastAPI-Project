@@ -3,9 +3,15 @@ from uuid import UUID
 from datetime import datetime
 
 
+"""Create Model"""
+
+
 class InviteCreate(BaseModel):
     team_id: UUID
     is_used: bool = False
+
+
+"""Response Model"""
 
 
 class InviteResponse(BaseModel):

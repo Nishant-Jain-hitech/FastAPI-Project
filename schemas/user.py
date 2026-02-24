@@ -1,6 +1,10 @@
-from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
+from pydantic import BaseModel, EmailStr, ConfigDict, field_validator, Field
 from uuid import UUID
 from models.enums import UserRole
+from typing import Optional
+
+
+"""Create Model"""
 
 
 class UserBase(BaseModel):
@@ -30,8 +34,22 @@ class UserCreate(UserBase):
         return v
 
 
+"""Response Model"""
+
+
 class UserResponse(UserBase):
     id: UUID
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+
+"""Update User"""
+
+
+class UpdateUser(BaseModel):
+    name: Optional[str]
+    email: Optional[EmailStr]
+    password: Optional[str] = Field(..., min_length=8)
+    role: Optional[UserRole]
+    is_active: Optional[bool]

@@ -1,7 +1,11 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from uuid import UUID
 from typing import Optional, List
-from .enums import Priority, Status
+from models.enums import Priority, Status
+
+
+"""Create Model"""
+
 
 class TaskBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=100)
@@ -16,9 +20,24 @@ class TaskBase(BaseModel):
             raise ValueError("Title cannot be empty strings")
         return cleaned
 
+
 class TaskCreate(TaskBase):
     team_id: Optional[UUID] = None
     assignee_id: Optional[UUID] = None
+
+
+"""Update Model"""
+
+
+class UpdateTask(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    priority: Optional[Priority] = None
+    status: Optional[Status] = None
+    assignee_id: Optional[UUID] = None
+
+
+"""Bulk Models"""
 
 
 class TaskBulkCreate(BaseModel):
@@ -30,11 +49,18 @@ class TaskBulkCreate(BaseModel):
             raise ValueError("Bulk create limit is 50 tasks per request")
         return v
 
+
+"""Stats Model"""
+
+
 class TaskStats(BaseModel):
     todo: int
     doing: int
     done: int
     total: int
+
+
+"""Response Model"""
 
 
 class TaskResponse(TaskBase):

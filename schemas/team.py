@@ -1,6 +1,10 @@
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 from datetime import datetime
+from typing import Optional
+
+
+"""Create Model"""
 
 
 class TeamBase(BaseModel):
@@ -9,6 +13,9 @@ class TeamBase(BaseModel):
 
 class TeamCreate(TeamBase):
     pass
+
+
+"""Response Model"""
 
 
 class TeamResponse(TeamBase):
@@ -25,3 +32,10 @@ class UserTeamResponse(BaseModel):
     joined_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+"""Update Model"""
+
+
+class UpdateTeam(BaseModel):
+    name: Optional[str]
