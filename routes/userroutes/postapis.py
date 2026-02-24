@@ -10,7 +10,7 @@ from models.user import User
 from models.team import UserTeam, Team
 from auth import hash_password, verify_password, create_access_token
 
-userRouter = APIRouter(prefix="/api/user")
+userRouter = APIRouter()
 
 
 @userRouter.post("/signup", response_model=schemas.user.UserResponse | dict)

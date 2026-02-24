@@ -9,7 +9,7 @@ from models.team import Team, UserTeam
 from schemas.team import TeamCreate, TeamResponse
 from models.user import User
 
-teamRouter = APIRouter(prefix="/api/team")
+teamRouter = APIRouter()
 
 
 @teamRouter.post("/create-team", response_model=TeamResponse)

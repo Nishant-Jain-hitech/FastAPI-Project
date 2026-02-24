@@ -11,10 +11,10 @@ from models.task import Task
 from models.team import UserTeam, Team
 from auth import hash_password, verify_password, create_access_token
 
-taskRouter = APIRouter(prefix="/api/task")
+taskUpdateRouter = APIRouter()
 
 
-@taskRouter.patch("/assign-task",response_model=schemas.task.TaskResponse)
+@taskUpdateRouter.patch("/assign-task",response_model=schemas.task.TaskResponse)
 async def assign_tasks(task_data:schemas.task.UpdateTaskTeam,user:User=Depends(require_roles("manager")),db:AsyncSession=Depends(async_get_db)):
     query=select(Task).where(Task.id==task_data.task_id)
     existing_record=await db.execute(query)

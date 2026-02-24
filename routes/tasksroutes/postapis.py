@@ -7,7 +7,7 @@ from schemas.task import TaskResponse, TaskCreate
 from models.task import Task
 from models.user import User
 
-taskRouter = APIRouter(prefix="/api/task")
+taskRouter = APIRouter()
 
 
 @taskRouter.post("/create-task", response_model=TaskResponse)
