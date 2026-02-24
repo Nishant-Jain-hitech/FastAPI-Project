@@ -37,6 +37,12 @@ class UpdateTask(BaseModel):
     assignee_id: Optional[UUID] = None
 
 
+class UpdateTaskTeam(BaseModel):
+    task_id:UUID
+    team_id:UUID
+    assignee_id:UUID
+
+
 """Bulk Models"""
 
 

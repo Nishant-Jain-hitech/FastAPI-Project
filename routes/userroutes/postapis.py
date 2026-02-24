@@ -75,12 +75,14 @@ async def assign_team(
     if not db_team:
         raise HTTPException(status_code=404, detail="team nhi h")
 
-    if user_team.created_by_id!=user.id:
-        raise HTTPException(status_code=403, detail="apna team dekho bhai, dusre me nhi aana")
+    if db_team.created_by_id != user.id:
+        raise HTTPException(
+            status_code=403, detail="apna team dekho bhai, dusre me nhi aana"
+        )
 
-    user_team = UserTeam(user_id=user_team.user_id, team_id=user_team.team_id)
-    db.add(user_team)
+    user_team_data = UserTeam(user_id=user_team.user_id, team_id=user_team.team_id)
+    db.add(user_team_data)
     await db.commit()
-    await db.refresh(user_team)
+    await db.refresh(user_team_data)
     db.close()
-    return user_team
+    return user_team_data

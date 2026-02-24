@@ -8,6 +8,7 @@ from exceptions import (
 from routes.createadmin import router
 from routes.userroutes.postapis import userRouter
 from routes.tasksroutes.postapis import taskRouter
+from routes.tasksroutes.updateapis import taskRouter
 from routes.teamroutes.postapis import teamRouter
 from fastapi.exceptions import RequestValidationError
 
