@@ -1,11 +1,24 @@
-from starlette.responses import JSONResponse
-from starlette.requests import Request
+from fastapi import Request, status
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError
 
 
-def integrity_exception_handler(request: Request, exc: IntegrityError):
-    return JSONResponse(status_code=400, content={"error": "Kuchh naya la"})
+async def integrity_exception_handler(request: Request, exc: IntegrityError):
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST, content={"error": "Kuchh naya la"}
+    )
 
 
-def global_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(status_code=500, content={"error": "Kuchh to gadbad h"})
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"error": "validate nhi hua"},
+    )
+
+
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"error": "Kuchh to gadbad h"},
+    )

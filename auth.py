@@ -1,24 +1,24 @@
-import bcrypt
-from fastapi import HTTPException, Depends
+import jwt
+from fastapi import HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+from passlib.context import CryptContext
 
-from models import User
-from database import get_db
-from config import settings
+from models.user import User
+from core.database import get_db
+from core.config import settings
+
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-def require_roles(*allowed_roles: str):
-    def role_checker(current_user: User = Depends(get_current_user)):
-        if current_user.role not in allowed_roles:
-            raise HTTPException(
-                status_code=403, 
-                detail=f"Abey! {current_user.role} allowed nahi h. Only {allowed_roles} can enter."
-            )
-        return current_user
-    return role_checker
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
 
 
 def create_access_token(data: dict):
@@ -30,21 +30,6 @@ def create_access_token(data: dict):
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-def hash_password(password: str) -> str:
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt)
-    return hashed_password.decode("utf-8")
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(
-        plain_password.encode("utf-8"), hashed_password.encode("utf-8")
-    )
-
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
-
 def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ):
@@ -52,11 +37,13 @@ def get_current_user(
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
-        email = payload.get("sub")
+        email: str = payload.get("sub")
         if email is None:
-            raise HTTPException(status_code=401, detail="invalid token")
-
-    except JWTError:
+            raise HTTPException(status_code=401, detail="Invalid token: missing subject")
+            
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
     user = db.query(User).filter(User.email == email).first()
@@ -64,3 +51,13 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="nhi mila")
 
     return user
+
+def require_roles(*allowed_roles: str):
+    def role_checker(current_user: User = Depends(get_current_user)):
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail=f"Abey! {current_user.role} allowed nahi h. Only {allowed_roles} can enter."
+            )
+        return current_user
+    return role_checker
