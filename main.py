@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from fastapi import FastAPI
 from exceptions import (
     integrity_exception_handler,
@@ -5,17 +6,23 @@ from exceptions import (
     validation_exception_handler,
 )
 from routes.createadmin import router
-
+from routes.userroutes.postapis import userRouter
+from routes.tasksroutes.postapis import taskRouter
+from routes.teamroutes.postapis import teamRouter
+from fastapi.exceptions import RequestValidationError
 
 app = FastAPI()
 
 
-app.exception_handler(integrity_exception_handler)
-app.exception_handler(global_exception_handler)
-app.exception_handler(validation_exception_handler)
+app.add_exception_handler(IntegrityError,integrity_exception_handler)
+app.add_exception_handler(Exception,global_exception_handler)
+# app.add_exception_handler(RequestValidationError,validation_exception_handler)
 
 
 app.include_router(router)
+app.include_router(userRouter)
+app.include_router(taskRouter)
+app.include_router(teamRouter)
 
 
 @app.get("/")

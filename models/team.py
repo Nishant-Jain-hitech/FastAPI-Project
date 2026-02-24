@@ -1,3 +1,4 @@
+from sqlalchemy import DateTime
 import uuid
 from typing import TYPE_CHECKING
 from datetime import datetime, timezone
@@ -53,7 +54,7 @@ class UserTeam(Base):
     )
 
     joined_at: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
     user: Mapped["User"] = relationship("User", back_populates="user_team")

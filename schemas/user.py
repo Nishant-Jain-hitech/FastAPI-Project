@@ -34,6 +34,11 @@ class UserCreate(UserBase):
         return v
 
 
+class UserLogin(BaseModel):
+    email:EmailStr
+    password:str
+
+
 """Response Model"""
 
 
@@ -42,6 +47,10 @@ class UserResponse(UserBase):
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserLoginResponse(BaseModel):
+    access_token: str
 
 
 """Update User"""

@@ -12,7 +12,12 @@ class TeamBase(BaseModel):
 
 
 class TeamCreate(TeamBase):
-    pass
+    created_by_id: Optional[UUID]=None
+
+
+class UserTeamCreate(BaseModel):
+    user_id: UUID
+    team_id: UUID
 
 
 """Response Model"""
