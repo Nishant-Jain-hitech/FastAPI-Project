@@ -30,6 +30,7 @@ class TaskCreate(TaskBase):
 
 
 class UpdateTask(BaseModel):
+    task_id:UUID
     title: Optional[str] = None
     description: Optional[str] = None
     priority: Optional[Priority] = None

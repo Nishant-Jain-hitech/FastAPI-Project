@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from sqlalchemy import UUID
+from uuid import UUID
 from auth import require_roles
 from fastapi import APIRouter, Depends
 from core.database import async_get_db
@@ -45,3 +45,5 @@ async def get_user_by_id(
 
     if not result:
         raise HTTPException(status_code=404, detail="user nhi h")
+
+    return result

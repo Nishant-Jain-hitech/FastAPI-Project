@@ -11,6 +11,7 @@ from routes.userroutes.getapis import userGetRouter
 from routes.tasksroutes.postapis import taskRouter
 from routes.tasksroutes.updateapis import taskUpdateRouter
 from routes.teamroutes.postapis import teamRouter
+from routes.teamroutes.updateapis import teamUpdateRouter
 from fastapi.exceptions import RequestValidationError
 
 app = FastAPI()
@@ -27,6 +28,7 @@ app.include_router(userGetRouter,prefix="/api/user")
 app.include_router(taskRouter,prefix="/api/task")
 app.include_router(taskUpdateRouter,prefix="/api/task")
 app.include_router(teamRouter,prefix="/api/team")
+app.include_router(teamUpdateRouter,prefix="/api/team")
 
 
 @app.get("/")

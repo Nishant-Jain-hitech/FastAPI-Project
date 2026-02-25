@@ -43,4 +43,5 @@ class UserTeamResponse(BaseModel):
 
 
 class UpdateTeam(BaseModel):
+    team_id:UUID
     name: Optional[str]
