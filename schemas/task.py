@@ -57,6 +57,16 @@ class TaskBulkCreate(BaseModel):
         return v
 
 
+class TaskBulkDelete(BaseModel):
+    task_ids: List[UUID] = Field(..., min_length=1)
+
+    @field_validator("task_ids")
+    def check_max_batch_size(cls, v: List[UUID]) -> List[UUID]:
+        if len(v) > 50:
+            raise ValueError("Bulk delete limit is 50 tasks per request")
+        return v
+
+
 """Stats Model"""
 
 

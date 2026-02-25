@@ -46,6 +46,9 @@ async def update_user(
         if current_user.role in ["admin", "manager"] and target_user.role != "admin":
             target_user.is_active = update_data.is_active
 
+    if update_data.name and update_data.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="sirf user apna name change krega")
+
     if update_data.name and update_data.user_id == current_user.id:
         target_user.name = update_data.name
 

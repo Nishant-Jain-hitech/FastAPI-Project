@@ -6,14 +6,25 @@ from exceptions import (
     validation_exception_handler,
 )
 from routes.createadmin import router
+
+
 from routes.userroutes.postapis import userRouter
 from routes.userroutes.getapis import userGetRouter
 from routes.userroutes.updateapis import userUpdateRouter
+
+
 from routes.tasksroutes.postapis import taskRouter
 from routes.tasksroutes.updateapis import taskUpdateRouter
+from routes.tasksroutes.bulks import taskBulkRouter
+from routes.tasksroutes.deleteapi import deleteTaskRouter
+from routes.tasksroutes.getapi import getTaskRouter
+
 from routes.teamroutes.postapis import teamRouter
 from routes.teamroutes.updateapis import teamUpdateRouter
 from routes.teamroutes.getapis import teamGetRouter
+from routes.teamroutes.deleteapis import deleteTeamRouter
+
+
 from fastapi.exceptions import RequestValidationError
 
 app = FastAPI()
@@ -32,11 +43,14 @@ app.include_router(userUpdateRouter,prefix="/api/user")
 
 app.include_router(taskRouter,prefix="/api/task")
 app.include_router(taskUpdateRouter,prefix="/api/task")
-
+app.include_router(taskBulkRouter,prefix="/api/task")
+app.include_router(deleteTaskRouter,prefix="/api/task")
+app.include_router(getTaskRouter,prefix="/api/task")
 
 app.include_router(teamRouter,prefix="/api/team")
 app.include_router(teamUpdateRouter,prefix="/api/team")
 app.include_router(teamGetRouter,prefix="/api/team")
+app.include_router(deleteTeamRouter,prefix="/api/team")
 
 
 @app.get("/")
