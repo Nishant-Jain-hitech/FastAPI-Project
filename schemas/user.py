@@ -57,8 +57,13 @@ class UserLoginResponse(BaseModel):
 
 
 class UpdateUser(BaseModel):
-    name: Optional[str]
-    email: Optional[EmailStr]
-    password: Optional[str] = Field(..., min_length=8)
-    role: Optional[UserRole]
-    is_active: Optional[bool]
+    user_id:UUID
+    name: Optional[str]=None
+    email: Optional[EmailStr]=None
+    password: Optional[str] = Field(None, min_length=8)
+    role: Optional[UserRole]=None
+    is_active: Optional[bool]=None
+
+
+# class RoleChangeRequest(BaseModel):
+#     role:UserRole
