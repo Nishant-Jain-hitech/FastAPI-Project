@@ -23,7 +23,7 @@ from routes.teamroutes.postapis import teamRouter
 from routes.teamroutes.updateapis import teamUpdateRouter
 from routes.teamroutes.getapis import teamGetRouter
 from routes.teamroutes.deleteapis import deleteTeamRouter
-
+from routes.teamroutes.invite_apis import inviteRouter
 
 from fastapi.exceptions import RequestValidationError
 
@@ -48,6 +48,7 @@ app.include_router(deleteTaskRouter,prefix="/api/task")
 app.include_router(getTaskRouter,prefix="/api/task")
 
 app.include_router(teamRouter,prefix="/api/team")
+app.include_router(inviteRouter,prefix="/api/team")
 app.include_router(teamUpdateRouter,prefix="/api/team")
 app.include_router(teamGetRouter,prefix="/api/team")
 app.include_router(deleteTeamRouter,prefix="/api/team")

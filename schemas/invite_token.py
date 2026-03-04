@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 from uuid import UUID
 from datetime import datetime
 
@@ -9,6 +9,7 @@ from datetime import datetime
 class InviteCreate(BaseModel):
     team_id: UUID
     is_used: bool = False
+    user_email: EmailStr
 
 
 """Response Model"""

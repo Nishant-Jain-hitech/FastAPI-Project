@@ -15,6 +15,9 @@ class InviteToken(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
     )
+
+    token: Mapped[str] = mapped_column(unique=True, nullable=False)
+    
     team_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("teams.id", ondelete="CASCADE"), nullable=False
     )
@@ -25,5 +28,6 @@ class InviteToken(Base):
         default=lambda: datetime.now(timezone.utc) + timedelta(hours=24)
     )
     is_used: Mapped[bool] = mapped_column(default=False)
+
 
     team: Mapped["Team"] = relationship("Team", back_populates="invite_tokens")
