@@ -23,7 +23,7 @@ class ActivityLog(Base):
     resource_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
 
     timestamp: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc)
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
     )
 
     user: Mapped["User"] = relationship("User", back_populates="activity_logs")

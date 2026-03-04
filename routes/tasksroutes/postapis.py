@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from schemas.task import TaskResponse, TaskCreate
 from models.task import Task
 from models.user import User
+from models.activity_log import ActivityLog
 
 taskRouter = APIRouter()
 
@@ -18,7 +19,17 @@ async def create_task(
 ):
     new_task = Task(**task.model_dump(), created_by_id=user.id)
     db.add(new_task)
+    
+    await db.flush()
+
+    activity = ActivityLog(
+        user_id=user.id,
+        action_type="TASK_CREATED",
+        resource_id=new_task.id
+    )
+    db.add(activity)
+
     await db.commit()
     await db.refresh(new_task)
-    db.close()
+    
     return new_task
