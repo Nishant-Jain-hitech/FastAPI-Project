@@ -32,3 +32,22 @@ async def send_task_completion_email(email_to: str, task_name: str):
  
     fm = FastMail(conf)
     await fm.send_message(message)
+
+
+async def send_invite_email(email_to: str, token: str):
+    html = f"""
+    <p>Hello,</p>
+    <p>You have been invited to join a team.</p>
+    <p>Click the link below to accept the invitation:</p>
+    <p>{token}</p>
+    <br>
+    <a href="http://localhost:8000/api/team/accept-invite/{token}">Accept Invitation</a>
+    """
+    message = MessageSchema(
+        subject="Team Invitation",
+        recipients=[email_to],
+        body=html,
+        subtype=MessageType.html
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message)

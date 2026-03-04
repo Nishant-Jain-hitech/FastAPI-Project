@@ -1,100 +1,110 @@
-import secrets
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import jwt
+import uuid
 
 from core.database import async_get_db
-from auth import require_roles, get_current_user
+from core.config import settings
+from auth import require_roles
 from models.user import User
 from models.team import Team, UserTeam
 from models.invite_token import InviteToken
 from schemas.invite_token import InviteCreate, InviteResponse
+from utils.helper import send_invite_email
 
 inviteRouter = APIRouter()
-
 
 @inviteRouter.post("/create-invite", response_model=InviteResponse)
 async def create_invite_token(
     background_task: BackgroundTasks,
     data: InviteCreate,
     db: AsyncSession = Depends(async_get_db),
-    current_user: User = Depends(require_roles("manager", "admin")),
+    current_user: User = Depends(require_roles("manager")),
 ):
+ 
     team = await db.get(Team, data.team_id)
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
-
-    if current_user.role == "manager" and team.create_by_id != current_user.id:
+    if team.created_by_id != current_user.id:
         raise HTTPException(
-            status_code=403, detail="Managers can only invite to their own teams"
+            status_code=403, detail="You can only create invite for your own team"
         )
-
-    user_query = select(User).where(User.email == data.user_email)
-    user_result = await db.execute(user_query)
-    target_user = user_result.scalars().first()
-
-    if not target_user:
+    query = select(User).where(
+        User.email == data.user_email, User.role == "user"
+    )
+    result = await db.execute(query)
+    db_user = result.scalars().first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="email not found")
+    query = select(UserTeam).where(
+        UserTeam.user_id == db_user.id, UserTeam.team_id == data.team_id
+    )
+    result = await db.execute(query)
+    existing_membership = result.scalars().first()
+    if existing_membership:
         raise HTTPException(
-            status_code=404, detail="User with this email does not exist"
+            status_code=400, detail="User is already a member of this team"
         )
-
-    token_str = secrets.token_urlsafe(32)
-    new_invite = InviteToken(
+    payload = {
+        "sub": data.user_email,
+        "team_id": str(data.team_id)
+    }
+ 
+    new_token_string= jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    invite = InviteToken(
         team_id=data.team_id,
         created_by_id=current_user.id,
-        token=token_str,
-        expires_at=(datetime.now(timezone.utc) + timedelta(hours=24)).replace(
-            tzinfo=None
-        ),
-        is_used=False,
+        token=new_token_string,
+        expires_at=(datetime.now(timezone.utc) + timedelta(hours=24)).replace(tzinfo=None) 
     )
-
-    db.add(new_invite)
+ 
+    db.add(invite)
     await db.commit()
-    await db.refresh(new_invite)
-
-    return new_invite
-
-
-@inviteRouter.post("/accept-invite/{token}")
-async def accept_invite(
-    token: str,
-    db: AsyncSession = Depends(async_get_db),
-    current_user: User = Depends(get_current_user),
-):
+    await db.refresh(invite)
+    background_task.add_task(
+        send_invite_email, data.user_email, new_token_string
+    )
+    return invite
+ 
+@inviteRouter.get("/accept-invite/{token}")
+async def accept_invite_token(token: str, db: AsyncSession = Depends(async_get_db)):
     query = select(InviteToken).where(InviteToken.token == token)
     result = await db.execute(query)
     invite = result.scalar_one_or_none()
-
-    if not invite:
-        raise HTTPException(status_code=404, detail="Invalid invitation token")
-
-    if invite.is_used:
-        raise HTTPException(status_code=400, detail="This token has already been used")
-
-    # Ensure comparison uses naive datetimes if your DB column is naive
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
-    if invite.expires_at < now:
-        raise HTTPException(status_code=400, detail="This invitation has expired")
-
-    membership_check = await db.execute(
-        select(UserTeam).where(
-            UserTeam.user_id == current_user.id,
-            UserTeam.team_id == invite.team_id,
-        )
+ 
+    if not invite or invite.is_used:
+        raise HTTPException(status_code=400, detail="Invalid or used invite")
+ 
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        email: str = payload.get("sub")
+        token_team_id = uuid.UUID(payload.get("team_id"))
+    except (jwt.PyJWTError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid token data")
+ 
+    user_query = select(User).where(User.email == email)
+    user_result = await db.execute(user_query)
+    db_user = user_result.scalar_one_or_none()
+ 
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+ 
+    user_id_to_add = db_user.id
+ 
+    new_membership = UserTeam(
+        user_id=user_id_to_add,
+        team_id=token_team_id
     )
-
-    if membership_check.scalars().first():
-        raise HTTPException(
-            status_code=400, detail="You are already a member of this team"
-        )
-
-    new_membership = UserTeam(user_id=current_user.id, team_id=invite.team_id)
-
+   
     invite.is_used = True
-
-    await db.add(new_membership)
+    db.add(new_membership)
+   
     await db.commit()
-
-    return {"message": "Successfully joined the team", "team_id": str(invite.team_id)}
+ 
+    return {
+        "status": "success",
+        "user_id": user_id_to_add,
+        "team_id": token_team_id
+    }
