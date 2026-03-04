@@ -25,6 +25,8 @@ from routes.teamroutes.getapis import teamGetRouter
 from routes.teamroutes.deleteapis import deleteTeamRouter
 from routes.teamroutes.invite_apis import inviteRouter
 
+from routes.activity.activity_log import activityRouter
+
 from fastapi.exceptions import RequestValidationError
 
 app = FastAPI()
@@ -53,6 +55,7 @@ app.include_router(teamUpdateRouter,prefix="/api/team")
 app.include_router(teamGetRouter,prefix="/api/team")
 app.include_router(deleteTeamRouter,prefix="/api/team")
 
+app.include_router(activityRouter,prefix="/api/activity")
 
 @app.get("/")
 def read_root():
