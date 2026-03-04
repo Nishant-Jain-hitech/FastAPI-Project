@@ -23,22 +23,28 @@ async def assign_tasks(
     existing_record = await db.execute(query)
     existing_record = existing_record.scalars().first()
 
+    if not existing_record:
+        raise HTTPException(status_code=404, detail="Task not found")
+
     if existing_record.team_id is not None or existing_record.assignee_id is not None:
-        raise HTTPException(status_code=400, detail="task pehle se assign h")
+        raise HTTPException(
+            status_code=400, detail="Task is already assigned to a team or user"
+        )
 
     db_user = await db.execute(select(User).where(User.id == task_data.assignee_id))
     db_user = db_user.scalars().first()
     if not db_user:
-        raise HTTPException(status_code=404, detail="user nhi h")
+        raise HTTPException(status_code=404, detail="Assignee user not found")
 
     db_team = await db.execute(select(Team).where(Team.id == task_data.team_id))
     db_team = db_team.scalars().first()
     if not db_team:
-        raise HTTPException(status_code=404, detail="team nhi h")
+        raise HTTPException(status_code=404, detail="Specified team not found")
 
     if db_team.created_by_id != user.id:
         raise HTTPException(
-            status_code=403, detail="apna team dekho bhai, dusre me nhi aana"
+            status_code=403,
+            detail="Access denied: You can only assign tasks to teams created by you",
         )
 
     existing_record.team_id = task_data.team_id
@@ -64,11 +70,12 @@ async def update_task(
     existing_record = existing_record.scalars().first()
 
     if not existing_record:
-        raise HTTPException(status_code=404, detail="task nhi h")
+        raise HTTPException(status_code=404, detail="Task not found")
 
     if existing_record.created_by_id != user.id and user.role == "manager":
         raise HTTPException(
-            status_code=403, detail="apna task dekho bhai, dusre me nhi aana"
+            status_code=403,
+            detail="Permission denied: You do not have authority to modify this task",
         )
     if (
         task_data.status
@@ -76,13 +83,10 @@ async def update_task(
         and existing_record.status != "done"
         and user.role == "user"
     ):
-        user_email = user.email
-        task_title = task_data.title or existing_record.title
         background_tasks.add_task(
             send_task_completion_email, user.email, existing_record.title
         )
-        print(f"DEBUG: Email task added for {user_email} regarding {task_title}")
-    
+
     if user.role == "admin" or user.role == "manager":
         if task_data.title:
             existing_record.title = task_data.title
@@ -92,7 +96,7 @@ async def update_task(
             existing_record.priority = task_data.priority
         if task_data.assign_id:
             existing_record.assignee_id = task_data.assign_id
-    
+
     if task_data.status:
         existing_record.status = task_data.status
 

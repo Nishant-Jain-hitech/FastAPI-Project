@@ -17,7 +17,9 @@ class TaskBase(BaseModel):
     def sanitize_title(cls, v: str) -> str:
         cleaned = v.capitalize()
         if not cleaned:
-            raise ValueError("Title cannot be empty strings")
+            raise ValueError(
+                "The task title cannot be an empty string or contain only whitespace"
+            )
         return cleaned
 
 
@@ -30,7 +32,7 @@ class TaskCreate(TaskBase):
 
 
 class UpdateTask(BaseModel):
-    task_id:UUID
+    task_id: UUID
     title: Optional[str] = None
     description: Optional[str] = None
     priority: Optional[Priority] = None
@@ -39,9 +41,9 @@ class UpdateTask(BaseModel):
 
 
 class UpdateTaskTeam(BaseModel):
-    task_id:UUID
-    team_id:UUID
-    assignee_id:UUID
+    task_id: UUID
+    team_id: UUID
+    assignee_id: UUID
 
 
 """Bulk Models"""
@@ -53,7 +55,9 @@ class TaskBulkCreate(BaseModel):
     @field_validator("tasks")
     def check_max_batch_size(cls, v: List[TaskCreate]) -> List[TaskCreate]:
         if len(v) > 50:
-            raise ValueError("Bulk create limit is 50 tasks per request")
+            raise ValueError(
+                "Bulk creation is limited to a maximum of 50 tasks per request"
+            )
         return v
 
 
@@ -63,7 +67,9 @@ class TaskBulkDelete(BaseModel):
     @field_validator("task_ids")
     def check_max_batch_size(cls, v: List[UUID]) -> List[UUID]:
         if len(v) > 50:
-            raise ValueError("Bulk delete limit is 50 tasks per request")
+            raise ValueError(
+                "Bulk deletion is limited to a maximum of 50 tasks per request"
+            )
         return v
 
 

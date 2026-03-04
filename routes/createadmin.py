@@ -8,23 +8,23 @@ import schemas.user
 from auth import hash_password
 
 
-router=APIRouter(prefix="/api")
+router = APIRouter(prefix="/api")
 
 
-@router.post('/create-admin',response_model=schemas.user.UserResponse|dict)
-async def create_admin(db:AsyncSession=Depends(async_get_db)):
-    hashed_password=hash_password("abcAb123@")
-    user={
-        "name":"admin",
-        "email":"admin@gmail.com",
-        "password":hashed_password,
-        "role":"admin"
+@router.post("/create-admin", response_model=schemas.user.UserResponse | dict)
+async def create_admin(db: AsyncSession = Depends(async_get_db)):
+    hashed_password = hash_password("abcAb123@")
+    user = {
+        "name": "admin",
+        "email": "admin@gmail.com",
+        "password": hashed_password,
+        "role": "admin",
     }
 
-    db_user=User(**user)
+    db_user = User(**user)
     db.add(db_user)
     await db.commit()
     await db.refresh(db_user)
     db.close()
-    
-    return {"message":"ban gya admin!"}
+
+    return {"message": "Administrator account successfully created"}

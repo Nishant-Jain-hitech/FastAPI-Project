@@ -6,19 +6,24 @@ from sqlalchemy.exc import IntegrityError
 
 async def integrity_exception_handler(request: Request, exc: IntegrityError):
     return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST, content={"error": "Kuchh naya la"}
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={
+            "error": "Database integrity constraint violation. The data provided may already exist or violates a unique constraint."
+        },
     )
 
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"error": "validate nhi hua"},
+        content={"error": "Request validation failed", "details": exc.errors()},
     )
 
 
 async def global_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"error": "Kuchh to gadbad h"},
+        content={
+            "error": "An unexpected internal server error occurred. Please try again later or contact support."
+        },
     )

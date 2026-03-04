@@ -21,7 +21,8 @@ async def create_user(
 ):
     if current_user.role == "manager" and user.role in ["admin", "manager"]:
         raise HTTPException(
-            status_code=403, detail="manager admin/manager nhi bna sakta"
+            status_code=403,
+            detail="Permission denied: Managers are not authorized to create administrative or management accounts",
         )
     hashed_password = hash_password(user.password)
     db_user = User(
@@ -41,10 +42,14 @@ async def login(user: schemas.user.UserLogin, db: AsyncSession = Depends(async_g
     db_user = result.scalars().first()
 
     if not db_user:
-        raise HTTPException(status_code=404, detail="bhai user nhi h, email check kar")
+        raise HTTPException(
+            status_code=404, detail="Account not found. Please verify the email address"
+        )
 
     if not verify_password(user.password, db_user.password):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=400, detail="Authentication failed: Invalid credentials"
+        )
 
     access_token = create_access_token(data={"sub": db_user.email})
 
@@ -63,21 +68,25 @@ async def assign_team(
     result = await db.execute(query)
     existing_record = result.scalars().first()
     if existing_record:
-        raise HTTPException(status_code=400, detail="user pehle se team me h")
+        raise HTTPException(
+            status_code=400,
+            detail="The specified user is already a member of this team",
+        )
 
     db_user = await db.execute(select(User).where(User.id == user_team.user_id))
     db_user = db_user.scalars().first()
     if not db_user:
-        raise HTTPException(status_code=404, detail="user nhi h")
+        raise HTTPException(status_code=404, detail="User record not found")
 
     db_team = await db.execute(select(Team).where(Team.id == user_team.team_id))
     db_team = db_team.scalars().first()
     if not db_team:
-        raise HTTPException(status_code=404, detail="team nhi h")
+        raise HTTPException(status_code=404, detail="Team record not found")
 
     if db_team.created_by_id != user.id:
         raise HTTPException(
-            status_code=403, detail="apna team dekho bhai, dusre me nhi aana"
+            status_code=403,
+            detail="Access denied: You can only assign users to teams you have created",
         )
 
     user_team_data = UserTeam(user_id=user_team.user_id, team_id=user_team.team_id)

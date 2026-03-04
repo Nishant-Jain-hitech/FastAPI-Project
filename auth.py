@@ -1,8 +1,7 @@
+import jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-import jwt
 from fastapi import HTTPException, Depends, status
-from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
@@ -43,18 +42,20 @@ async def get_current_user(
         email: str = payload.get("sub")
         if email is None:
             raise HTTPException(
-                status_code=401, detail="Invalid token: missing subject"
+                status_code=401, detail="Invalid authentication token: missing subject"
             )
 
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
+        raise HTTPException(status_code=401, detail="Authentication token has expired")
     except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(
+            status_code=401, detail="Could not validate authentication credentials"
+        )
 
     user = await db.execute(select(User).where(User.email == email))
     user = user.scalars().first()
     if not user:
-        raise HTTPException(status_code=401, detail="nhi mila")
+        raise HTTPException(status_code=401, detail="User account not found")
 
     return user
 
@@ -64,7 +65,7 @@ def require_roles(*allowed_roles: str):
         if current_user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Abey! {current_user.role} allowed nahi h. Only {allowed_roles} can enter.",
+                detail=f"Access denied: Role '{current_user.role}' does not have permission to access this resource. Authorized roles: {', '.join(allowed_roles)}.",
             )
         return current_user
 

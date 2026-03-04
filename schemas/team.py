@@ -55,8 +55,6 @@ class TeamMemberStats(BaseModel):
     name: str
     email: str
     task_count: int
-
-    # model_config = ConfigDict(from_attributes=True)
  
  
 class ManagerDetails(BaseModel):

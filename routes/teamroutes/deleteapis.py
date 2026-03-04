@@ -14,10 +14,10 @@ deleteTeamRouter = APIRouter()
 
 
 @deleteTeamRouter.delete("/{team_id}", response_model=dict)
-async def get_team(
+async def delete_team(
     team_id: UUID,
     db: AsyncSession = Depends(async_get_db),
-    current_user: User = Depends(require_roles("admin","manager")),
+    current_user: User = Depends(require_roles("admin", "manager")),
 ):
     team = (
         await db.execute(
@@ -29,15 +29,19 @@ async def get_team(
     ).scalar_one_or_none()
 
     if not team:
-        raise HTTPException(status_code=404, detail="Team not found")
+        raise HTTPException(
+            status_code=404,
+            detail="The specified team could not be found or has already been removed",
+        )
 
     if current_user.role == "admin" or (
         current_user.role == "manager" and team.created_by_id == current_user.id
     ):
         team.is_deleted = True
         await db.commit()
-        return {"message": "deleted successfully"}
+        return {"message": "Team successfully deleted"}
 
     raise HTTPException(
-        status_code=403, detail="if you are manager then you only delete your team"
+        status_code=403,
+        detail="Access denied: Managers are only permitted to delete teams they have created",
     )

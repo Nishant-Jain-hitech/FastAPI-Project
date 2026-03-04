@@ -16,7 +16,9 @@ class UserBase(BaseModel):
     def name_must_not_be_empty(cls, v: str) -> str:
         cleaned_name = v.strip()
         if not cleaned_name:
-            raise ValueError("Name cannot be empty or just whitespace")
+            raise ValueError(
+                "The name field cannot be empty or consist solely of whitespace"
+            )
         return cleaned_name
 
 
@@ -26,17 +28,17 @@ class UserCreate(UserBase):
     @field_validator("password")
     def password_strength(cls, v: str) -> str:
         if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
+            raise ValueError("Password must be at least 8 characters in length")
         if not any(char.isdigit() for char in v):
-            raise ValueError("Password must contain at least one number")
+            raise ValueError("Password must contain at least one numeric character")
         if not any(char.isupper() for char in v):
             raise ValueError("Password must contain at least one uppercase letter")
         return v
 
 
 class UserLogin(BaseModel):
-    email:EmailStr
-    password:str
+    email: EmailStr
+    password: str
 
 
 """Response Model"""
@@ -57,13 +59,9 @@ class UserLoginResponse(BaseModel):
 
 
 class UpdateUser(BaseModel):
-    user_id:UUID
-    name: Optional[str]=None
-    email: Optional[EmailStr]=None
+    user_id: UUID
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
     password: Optional[str] = Field(None, min_length=8)
-    role: Optional[UserRole]=None
-    is_active: Optional[bool]=None
-
-
-# class RoleChangeRequest(BaseModel):
-#     role:UserRole
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None

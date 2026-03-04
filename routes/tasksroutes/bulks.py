@@ -33,7 +33,7 @@ async def bulk_create_tasks(
         return new_tasks
     except Exception:
         await db.rollback()
-        raise HTTPException(status_code=500, detail="Bulk upload failed")
+        raise HTTPException(status_code=500, detail="Bulk task creation failed")
 
 
 @taskBulkRouter.patch("/bulk-update", response_model=List[TaskResponse])
@@ -51,7 +51,10 @@ async def bulk_update_tasks(
     existing_tasks = {t.id: t for t in result.scalars().all()}
 
     if len(existing_tasks) != len(task_ids):
-        raise HTTPException(status_code=404, detail="Kuch task IDs database mein nahi mile")
+        raise HTTPException(
+            status_code=404,
+            detail="One or more task IDs were not found in the database",
+        )
 
     updated_objects = []
     for update_data in updates:
@@ -59,8 +62,8 @@ async def bulk_update_tasks(
 
         if user.role == "manager" and target_task.created_by_id != user.id:
             raise HTTPException(
-                status_code=403, 
-                detail=f"Task {target_task.id} aapki nahi hai, update nahi kar sakte"
+                status_code=403,
+                detail=f"Access denied: You do not have permission to update task ID {target_task.id}",
             )
 
         update_dict = update_data.model_dump(exclude_unset=True, exclude={"task_id"})
@@ -76,7 +79,7 @@ async def bulk_update_tasks(
         return updated_objects
     except Exception:
         await db.rollback()
-        raise HTTPException(status_code=500, detail="Bulk update failed")
+        raise HTTPException(status_code=500, detail="Bulk update operation failed")
 
 
 @taskBulkRouter.delete("/bulk-delete")
@@ -93,7 +96,7 @@ async def bulk_delete_tasks(
 
         if len(existing_ids) != len(data.task_ids):
             raise HTTPException(
-                status_code=404, detail="Kuch task IDs database mein nahi mile"
+                status_code=404, detail="One or more specified task IDs do not exist"
             )
 
         if user.role == "manager":
@@ -103,17 +106,20 @@ async def bulk_delete_tasks(
             if unauthorized_tasks:
                 raise HTTPException(
                     status_code=403,
-                    detail="Aap kisi aur manager ki task delete nahi kar sakte",
+                    detail="Permission denied: Managers can only delete tasks they have created",
                 )
 
         delete_query = delete(Task).where(Task.id.in_(data.task_ids))
         await db.execute(delete_query)
         await db.commit()
 
-        return {"message": "Bulk delete successful"}
+        return {"message": "Bulk deletion completed successfully"}
 
     except HTTPException:
         raise
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=f"Server error during bulk delete {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An internal server error occurred during the bulk delete operation",
+        )

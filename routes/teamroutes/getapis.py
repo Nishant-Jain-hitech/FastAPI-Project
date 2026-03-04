@@ -9,7 +9,12 @@ from core.database import async_get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.team import Team, UserTeam
-from schemas.team import TeamResponse, TeamDetailResponse, TeamMemberStats, ManagerDetails
+from schemas.team import (
+    TeamResponse,
+    TeamDetailResponse,
+    TeamMemberStats,
+    ManagerDetails,
+)
 from models.user import User
 from models.task import Task
 from sqlalchemy import func
@@ -30,7 +35,7 @@ async def list_teams(
             .all()
         )
         return teams
- 
+
     if current_user.role == "manager":
         teams = (
             (
@@ -45,7 +50,7 @@ async def list_teams(
             .all()
         )
         return teams
- 
+
     teams = (
         (
             await db.execute(
@@ -60,10 +65,10 @@ async def list_teams(
         .scalars()
         .all()
     )
- 
+
     return teams
- 
- 
+
+
 @teamGetRouter.get("/{team_id}", response_model=TeamDetailResponse)
 async def get_team_details(
     team_id: UUID,
@@ -78,16 +83,22 @@ async def get_team_details(
             )
         )
     ).scalar_one_or_none()
- 
+
     if not team:
-        raise HTTPException(status_code=404, detail="Team not found")
- 
+        raise HTTPException(
+            status_code=404,
+            detail="The requested team does not exist or has been deleted",
+        )
+
     if current_user.role == UserRole.ADMIN:
         pass
- 
+
     elif current_user.role == UserRole.MANAGER:
         if team.created_by_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Access denied")
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: You do not have permission to view this team's details",
+            )
     else:
         membership = (
             await db.execute(
@@ -97,10 +108,13 @@ async def get_team_details(
                 )
             )
         ).scalar_one_or_none()
- 
+
         if not membership:
-            raise HTTPException(status_code=403, detail="Access denied")
- 
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: You are not a member of this team",
+            )
+
     task_count = (
         await db.execute(
             select(func.count(Task.id)).where(
@@ -109,7 +123,7 @@ async def get_team_details(
             )
         )
     ).scalar()
- 
+
     member_count = (
         await db.execute(
             select(func.count(UserTeam.user_id)).where(
@@ -117,11 +131,11 @@ async def get_team_details(
             )
         )
     ).scalar()
- 
+
     manager = (
         await db.execute(select(User).where(User.id == team.created_by_id))
     ).scalar_one()
- 
+
     members = (
         (
             await db.execute(
@@ -133,9 +147,9 @@ async def get_team_details(
         .scalars()
         .all()
     )
- 
+
     members_data = []
- 
+
     for member in members:
         user_task_count = (
             await db.execute(
@@ -146,7 +160,7 @@ async def get_team_details(
                 )
             )
         ).scalar()
- 
+
         members_data.append(
             TeamMemberStats(
                 id=member.id,
@@ -155,7 +169,7 @@ async def get_team_details(
                 task_count=user_task_count,
             )
         )
- 
+
     return TeamDetailResponse(
         team_id=team.id,
         team_name=team.name,

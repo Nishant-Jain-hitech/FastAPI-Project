@@ -21,23 +21,33 @@ async def update_user(
     target_user = db_result.scalars().first()
 
     if not target_user:
-        raise HTTPException(status_code=404, detail="user nhi h")
+        raise HTTPException(
+            status_code=404, detail="The specified user record was not found"
+        )
 
     if update_data.role:
         if current_user.role != "admin":
-            raise HTTPException(status_code=403, detail="sirf admin role change krega")
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: Role modifications are restricted to administrators",
+            )
 
         if target_user.role == "admin":
             raise HTTPException(
-                status_code=400, detail="admin ka role change nhi karna"
+                status_code=400,
+                detail="Modification denied: Administrative roles cannot be altered",
             )
 
         if target_user.role == update_data.role:
-            raise HTTPException(status_code=400, detail="already same role me h")
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid request: The user is already assigned to the specified role",
+            )
 
         if target_user.role == "manager" and update_data.role in ["user", "admin"]:
             raise HTTPException(
-                status_code=400, detail=f"manager ko {update_data.role} nhi bana sakte"
+                status_code=400,
+                detail=f"Restricted operation: A manager cannot be demoted to {update_data.role}",
             )
 
         target_user.role = update_data.role
@@ -47,7 +57,10 @@ async def update_user(
             target_user.is_active = update_data.is_active
 
     if update_data.name and update_data.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="sirf user apna name change krega")
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied: Users are only permitted to modify their own profile names",
+        )
 
     if update_data.name and update_data.user_id == current_user.id:
         target_user.name = update_data.name
@@ -58,4 +71,7 @@ async def update_user(
         return target_user
     except Exception:
         await db.rollback()
-        raise HTTPException(status_code=500, detail="Database update failed")
+        raise HTTPException(
+            status_code=500,
+            detail="An internal error occurred during the database update",
+        )

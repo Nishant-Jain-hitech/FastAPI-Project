@@ -34,7 +34,7 @@ app = FastAPI()
 
 app.add_exception_handler(IntegrityError,integrity_exception_handler)
 app.add_exception_handler(Exception,global_exception_handler)
-# app.add_exception_handler(RequestValidationError,validation_exception_handler)
+app.add_exception_handler(RequestValidationError,validation_exception_handler)
 
 
 app.include_router(router)

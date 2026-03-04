@@ -23,11 +23,14 @@ async def update_team(
     existing_record = existing_record.scalars().first()
 
     if not existing_record:
-        raise HTTPException(status_code=404, detail="team nhi h")
+        raise HTTPException(
+            status_code=404, detail="The requested team record could not be found"
+        )
 
     if user.role == "manager" and existing_record.created_by_id != user.id:
         raise HTTPException(
-            status_code=403, detail="apna team dekho bhai, dusre me nhi aana"
+            status_code=403,
+            detail="Access denied: You do not have permission to modify a team you did not create",
         )
 
     existing_record.name = team_data.name

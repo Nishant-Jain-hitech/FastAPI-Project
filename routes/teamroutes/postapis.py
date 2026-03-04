@@ -18,20 +18,23 @@ async def create_task(
     db: AsyncSession = Depends(async_get_db),
 ):
 
-    if user.role=="admin" and team.created_by_id is None:
-        raise HTTPException(status_code=422, detail="created_by_id daalo bhai")
+    if user.role == "admin" and team.created_by_id is None:
+        raise HTTPException(
+            status_code=422,
+            detail="The field 'created_by_id' is required for administrators to create a team",
+        )
 
-    if user.role=="admin" and team.created_by_id is not None:
-        new_team = Team(name=team.name,created_by_id=team.created_by_id)
+    if user.role == "admin" and team.created_by_id is not None:
+        new_team = Team(name=team.name, created_by_id=team.created_by_id)
         db.add(new_team)
         await db.flush()
-        user_team=UserTeam(user_id=team.created_by_id,team_id=new_team.id)
+        user_team = UserTeam(user_id=team.created_by_id, team_id=new_team.id)
 
     else:
-        new_team = Team(name=team.name,created_by_id=user.id)
+        new_team = Team(name=team.name, created_by_id=user.id)
         db.add(new_team)
         await db.flush()
-        user_team=UserTeam(user_id=user.id,team_id=new_team.id)
+        user_team = UserTeam(user_id=user.id, team_id=new_team.id)
 
     db.add(user_team)
     await db.commit()

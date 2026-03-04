@@ -19,17 +19,15 @@ async def create_task(
 ):
     new_task = Task(**task.model_dump(), created_by_id=user.id)
     db.add(new_task)
-    
+
     await db.flush()
 
     activity = ActivityLog(
-        user_id=user.id,
-        action_type="TASK_CREATED",
-        resource_id=new_task.id
+        user_id=user.id, action_type="TASK_CREATED", resource_id=new_task.id
     )
     db.add(activity)
 
     await db.commit()
     await db.refresh(new_task)
-    
+
     return new_task

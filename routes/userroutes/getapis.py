@@ -44,6 +44,9 @@ async def get_user_by_id(
     result = result.scalars().first()
 
     if not result:
-        raise HTTPException(status_code=404, detail="user nhi h")
+        raise HTTPException(
+            status_code=404,
+            detail="The specified user could not be found in the system",
+        )
 
     return result

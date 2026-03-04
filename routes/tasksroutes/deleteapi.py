@@ -28,15 +28,19 @@ async def get_team(
     ).scalar_one_or_none()
 
     if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(
+            status_code=404,
+            detail="The requested task could not be found or has already been deleted",
+        )
 
     if current_user.role == "admin" or (
         current_user.role == "manager" and task.created_by_id == current_user.id
     ):
         task.is_deleted = True
         await db.commit()
-        return {"message": "deleted successfully"}
+        return {"message": "Task successfully marked as deleted"}
 
     raise HTTPException(
-        status_code=403, detail="if you are manager then you only delete your task"
+        status_code=403,
+        detail="Access denied: Managers are only permitted to delete tasks they have created",
     )
