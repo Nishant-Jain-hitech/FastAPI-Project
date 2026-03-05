@@ -55,9 +55,6 @@ async def assign_tasks(
     return existing_record
 
 
-taskUpdateRouter = APIRouter()
-
-
 @taskUpdateRouter.patch("/update-task", response_model=TaskResponse)
 async def update_task(
     background_tasks: BackgroundTasks,
